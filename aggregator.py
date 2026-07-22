@@ -4,11 +4,12 @@ import random
 import hashlib
 import difflib
 from datetime import datetime, timedelta
+import os
 import db
 
 # Optional Adzuna API credentials. Can be set via environment variables.
-ADZUNA_APP_ID = "d5d9c228"  # A demo/placeholder key
-ADZUNA_APP_KEY = "c8942b03fb4ff99912093e0b200b3d88" # A demo/placeholder key
+ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID", "d5d9c228")  # Demo key
+ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY", "c8942b03fb4ff99912093e0b200b3d88")  # Demo key
 
 def generate_job_id(title, company, location, source):
     """Generates a stable unique ID based on core fields to prevent database pollution."""

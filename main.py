@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 from typing import List, Optional
 import os
+from contextlib import asynccontextmanager
 
 import db
 import aggregator
@@ -26,10 +27,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Startup hook to initialize the database
-@app.on_event("startup")
-def startup_event():
+# Lifespan event handler
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     db.init_db()
+    yield
+    # Shutdown (cleanup if needed)
+
+app.router.lifespan_context = lifespan
 
 @app.get("/api/jobs")
 def get_jobs(
@@ -112,4 +118,6 @@ os.makedirs(static_dir, exist_ok=True)
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "127.0.0.1")
+    uvicorn.run("main:app", host=host, port=port, reload=True)
