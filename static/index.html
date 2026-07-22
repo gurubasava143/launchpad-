@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaunchPad IT - Entry-Level Job Board for Freshers</title>
+    <meta name="description" content="Aggregate entry-level and fresher IT jobs from Naukri, Indeed, LinkedIn, Wellfound and more in a single deduplicated search portal.">
+    <!-- Tailwind CSS v3 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            950: '#030712',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/app.css">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-gray-100 min-h-screen relative flex flex-col antialiased">
+
+    <!-- Glowing background blobs for ambient aesthetic -->
+    <div class="glow-blob bg-indigo-600 w-[500px] h-[500px] top-[-100px] left-[-100px]"></div>
+    <div class="glow-blob bg-purple-600 w-[600px] h-[600px] bottom-[-200px] right-[-100px]"></div>
+    <div class="glow-blob bg-cyan-600 w-[400px] h-[400px] top-[40%] left-[50%]"></div>
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-white/5 bg-slate-950/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Brand Logo -->
+            <a href="/" class="flex items-center gap-2.5 flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                    <i class="fa-solid fa-rocket text-white text-lg"></i>
+                </div>
+                <div class="hidden sm:block">
+                    <h1 class="text-xl font-bold tracking-tight text-white leading-none">LaunchPad<span class="text-indigo-400 font-extrabold">IT</span></h1>
+                    <span class="text-[10px] text-indigo-300 tracking-wider font-semibold uppercase">Fresher Job Board</span>
+                </div>
+            </a>
+
+            <!-- Universal Search Bar -->
+            <div class="flex-grow max-w-lg relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+                </div>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="w-full pl-10 pr-4 py-2 rounded-xl text-sm glass-input placeholder-gray-400"
+                    placeholder="Search titles, companies, or skills (e.g. React, Django)..."
+                >
+                <button 
+                    id="clear-search" 
+                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-white hidden"
+                >
+                    <i class="fa-solid fa-circle-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Header Action Controls -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <!-- Bookmarked Jobs Toggle -->
+                <button 
+                    id="bookmarks-toggle" 
+                    class="w-10 h-10 rounded-xl border border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/10 flex items-center justify-center transition-all duration-300 relative group"
+                    title="View Bookmarks"
+                >
+                    <i class="fa-regular fa-bookmark text-gray-300 group-hover:text-indigo-400 text-base"></i>
+                    <span id="bookmarks-badge" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center hidden">0</span>
+                </button>
+
+                <!-- Sync Feeds Trigger -->
+                <button 
+                    id="sync-button" 
+                    class="h-10 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm font-semibold flex items-center gap-2 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all duration-300"
+                >
+                    <i class="fa-solid fa-rotate text-xs" id="sync-icon"></i>
+                    <span class="hidden sm:inline">Sync Aggregator</span>
+                    <span class="sm:hidden">Sync</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 z-10 flex flex-col gap-6">
+
+        <!-- Stat Cards Panel -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4" aria-label="Quick Aggregator Metrics">
+            <div class="glass-panel rounded-2xl p-4 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="fa-solid fa-briefcase"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400 block font-medium">Aggregated Jobs</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-white tracking-tight" id="stat-total-jobs">-</strong>
+                </div>
+            </div>
+            
+            <div class="glass-panel rounded-2xl p-4 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400 block font-medium">Added Today</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-white tracking-tight" id="stat-new-today">-</strong>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-4 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="fa-solid fa-copy"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400 block font-medium">Duplicates Blocked</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-white tracking-tight" id="stat-duplicates">-</strong>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-4 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-xl flex-shrink-0">
+                    <i class="fa-solid fa-bookmark"></i>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400 block font-medium">Bookmarks Saved</span>
+                    <strong class="text-xl sm:text-2xl font-bold text-white tracking-tight" id="stat-bookmarked">-</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-white/5 gap-1.5" role="tablist">
+            <button 
+                id="tab-jobs" 
+                class="px-5 py-3 text-sm font-semibold border border-transparent rounded-t-xl text-gray-400 hover:text-white nav-tab-btn active"
+                role="tab" 
+                aria-selected="true" 
+                aria-controls="jobs-view-section"
+            >
+                <i class="fa-solid fa-briefcase text-xs mr-2"></i>Active Job Postings
+            </button>
+            <button 
+                id="tab-startups" 
+                class="px-5 py-3 text-sm font-semibold border border-transparent rounded-t-xl text-gray-400 hover:text-white nav-tab-btn"
+                role="tab" 
+                aria-selected="false" 
+                aria-controls="startups-view-section"
+            >
+                <i class="fa-solid fa-rocket text-xs mr-2"></i>Indian Startup Hub
+            </button>
+        </div>
+
+        <!-- View 1: Jobs Board -->
+        <div id="jobs-view-section" class="flex flex-col lg:flex-row gap-6 items-start w-full">
+            
+            <!-- Filter Sidebar -->
+            <aside class="w-full lg:w-64 glass-panel rounded-2xl p-5 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto custom-scrollbar flex-shrink-0">
+                <div class="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
+                    <h2 class="font-semibold text-white tracking-wide flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-indigo-400 text-sm"></i>
+                        Filter Search
+                    </h2>
+                    <button id="reset-filters" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+                        Reset All
+                    </button>
+                </div>
+
+                <div class="space-y-5">
+                    <!-- Filter: Experience -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Experience level</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="experience" value="0 yrs" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Fresher (0 yrs)</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="experience" value="0-1 yrs" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">0 - 1 years</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="experience" value="0-2 yrs" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">0 - 2 years</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Filter: Tech Stack -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tech Stack / Skills</h3>
+                        <div class="flex flex-wrap gap-1.5" id="skills-filter-container">
+                            <!-- Skill Tags will be injected here dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Filter: Location Type -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Location</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="location" value="Remote" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Remote / WFH</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="location" value="Bengaluru" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Bengaluru</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="location" value="Pune" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Pune</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="location" value="Gurugram" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Gurugram / Delhi NCR</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="location" value="Mumbai" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Mumbai</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Filter: Company Type -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Company Type</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="company_type" value="Startup" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Startup</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="company_type" value="Product-based" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Product-based</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="company_type" value="MNC" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">MNC</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="checkbox" name="company_type" value="Service-based" class="rounded bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Service-based</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Filter: Posted Date -->
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Date Posted</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="radio" name="posted_within" value="" checked class="bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Any time</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="radio" name="posted_within" value="24h" class="bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Last 24 hours</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="radio" name="posted_within" value="week" class="bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Last week</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 text-sm cursor-pointer group">
+                                <input type="radio" name="posted_within" value="month" class="bg-slate-900 border-white/10 text-indigo-600 focus:ring-indigo-500/30 w-4 h-4">
+                                <span class="text-gray-300 group-hover:text-white transition-colors">Last month</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Job Listings Column -->
+            <section class="flex-grow w-full flex flex-col gap-4" aria-label="Job Board Feed">
+                
+                <!-- Filter Status Header -->
+                <div class="flex items-center justify-between glass-panel rounded-2xl px-5 py-3 text-sm">
+                    <div class="text-gray-300" id="results-count-label">
+                        Showing <span class="text-white font-semibold" id="count-number">0</span> jobs
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-gray-400">Sort by:</span>
+                        <span class="text-white font-medium">Newest First</span>
+                    </div>
+                </div>
+
+                <!-- Feed Grid -->
+                <div class="grid grid-cols-1 gap-4" id="jobs-container">
+                    <!-- Job cards will be loaded here dynamically -->
+                </div>
+
+            </section>
+
+        </div>
+
+        <!-- View 2: Startup Hub Directory -->
+        <div id="startups-view-section" class="hidden w-full flex flex-col gap-6">
+            <!-- Header section of directory -->
+            <div class="glass-panel rounded-2xl p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <i class="fa-solid fa-rocket text-purple-400"></i> Indian Startup Directory
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">Connect directly with career portals and explore entry-level tech openings at top Indian startups.</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <span class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 font-medium text-white flex items-center gap-1.5">
+                        <i class="fa-solid fa-flag text-orange-400"></i> Localized to India
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Grid container for startups -->
+            <div id="startups-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Startup cards will be rendered dynamically here -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-panel border-t border-white/5 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex justify-center gap-6 mb-4">
+                <a href="#" class="text-gray-400 hover:text-indigo-400 text-lg transition-colors"><i class="fa-brands fa-github"></i></a>
+                <a href="#" class="text-gray-400 hover:text-indigo-400 text-lg transition-colors"><i class="fa-brands fa-linkedin"></i></a>
+                <a href="#" class="text-gray-400 hover:text-indigo-400 text-lg transition-colors"><i class="fa-brands fa-twitter"></i></a>
+            </div>
+            <p class="text-xs text-gray-500">LaunchPad IT © 2026. Made with love for developers. All data is aggregated for educational and search purposes.</p>
+        </div>
+    </footer>
+
+    <!-- Toast Success Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        <!-- Toast elements will be dynamically created here -->
+    </div>
+
+    <!-- Custom Frontend App Logic -->
+    <script src="/app.js"></script>
+</body>
+</html>
